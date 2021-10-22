@@ -4,8 +4,87 @@ Virtual Terminal
 {{end}}
 
 {{define "content"}}
-<h2> Virtual Terminal!!!!</h2>
+<h2 class="mt-3 text-center"> Virtual Terminal</h2>
+<hr>
+<div class="alert alert-danger text-center d-none" id="card=messages"> </div>
+<form action="/payment-succed" method="post" name="change_form" id="change_form" class="d-block need-validation charge-form" autocomplete="off" novalidate="">
+ <div class="mb-3">
+    <label for="amount" class="form-label">Amount</label>
+    <input type="text" class="form-control" id="amount" name="amount" required="" autocomplete="amount-new" >
+ </div>
+  <div class="mb-3">
+    <label for="cardholder-name" class="form-label">Cardholder Name</label>
+    <input type="text" class="form-control" id="cardholder-name" name="cardholder-name" required="" autocomplete="cardholder-name-new" >
+ </div>
+   <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+    <input type="text" class="form-control" id="email" name="email" required="" autocomplete="email-new" >
+ </div>
+
+ <div class="mb-3">
+    <label for="card-element" class="form-label">Credit Card</label>
+    <div id="card-element" class="form-control"></div>
+    <div class="alert-danger text-centered" id="card-errors" role="alert"> </div>
+    <div class="alert-success text-centered" id="card-success" role="alert"> </div>
+ </div>
+ <hr>
+<a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()"> Change Card</a>
+<div class="text-center d-none" id="processing-payment">
+    <div class="spinner-border text-primary" role="status">
+     <span class="visually-hidden"> Loading...</span>
+    </div>
+</div>
+</form>
+
 {{end}}
 {{define "js"}}
+<script src="https://js.stripe.com/v3/"> </script>
+<script>
+let card;
+let stripe;
+const cardMessages = document.getElementById("card-messages");
+const payButton = document.getElementById("pay-button");
+const processing = document.getElementById("processing-payment");
 
+stripe = Stripe('pk_test_51JnREiCouv4KRTazF1WhOpR7sr9qqON2ApwJOOqHy39zyGrV99WVDlXI7H7EfMeBXiUhEJHxqh69LmPK1fANdg1H00QbXEUpji');
+    function val(){
+        let form = document.getElementById("change_form");
+        if (form.checkValidity() === false) {
+        this.event.preventDefault();
+        this.event.stopPropagation();
+        form.classList.add("was-validated");
+        return;
+        }
+        form.classList.add("was-validated");
+    }
+    (function(){
+    const elements = stripe.elements();
+    const style = {
+        base: {
+        fontSize: "16px",
+        lineHeight: "24px",
+         }   
+        };
+
+        //crate card entry
+        card = elements.create('card', {
+        style: style,
+        hidePostalCode: true,
+        });
+        card.mount("#card-element")
+
+        //check for input errors
+        card.addEventListener('change',function(e){
+            var displayError = document.getElementById("card-errors");
+            if (e.error){
+                displayError.classList.remove('d-none');
+                displayError.textContent = e.error.message;
+            }else {
+                displayError.classList.add('d-none');
+                displayError.textContent = "";
+            }
+        })
+
+    })();
+</script>
 {{end}}
