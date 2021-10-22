@@ -11,11 +11,11 @@ import (
 type templateData struct {
 	StringMap       map[string]string
 	IntMap          map[string]int
-	FloatMap        map[string]float64
+	FloatMap        map[string]float32
 	Data            map[string]interface{}
 	CSRFToken       string
-	FlashData       string
-	WarningData     string
+	Flash           string
+	Warning         string
 	Error           string
 	IsAuthenticated int
 	API             string
@@ -24,7 +24,7 @@ type templateData struct {
 
 var functions = template.FuncMap{}
 
-// go:embed templates
+//go:embed templates
 var templateFS embed.FS
 
 func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
@@ -37,6 +37,7 @@ func (app *application) renderTemplate(w http.ResponseWriter, r *http.Request, p
 	templateToRender := fmt.Sprintf("templates/%s.page.tmpl", page)
 
 	_, templateInMap := app.templateCache[templateToRender]
+
 	if app.config.env == "production" && templateInMap {
 		t = app.templateCache[templateToRender]
 	} else {
@@ -52,6 +53,7 @@ func (app *application) renderTemplate(w http.ResponseWriter, r *http.Request, p
 	}
 
 	td = app.addDefaultData(td, r)
+
 	err = t.Execute(w, td)
 	if err != nil {
 		app.errorLog.Println(err)
@@ -59,27 +61,24 @@ func (app *application) renderTemplate(w http.ResponseWriter, r *http.Request, p
 	}
 
 	return nil
-
 }
 
-func (app *application) parseTemplate(partials []string, page string, templateToRender string) (*template.Template, error) {
+func (app *application) parseTemplate(partials []string, page, templateToRender string) (*template.Template, error) {
 	var t *template.Template
 	var err error
 
-	//build partial
+	// build partials
 	if len(partials) > 0 {
 		for i, x := range partials {
-			partials[i] = fmt.Sprintf("templates/%s.partials.tmpl", x)
+			partials[i] = fmt.Sprintf("templates/%s.partial.tmpl", x)
 		}
 	}
+
 	if len(partials) > 0 {
 		t, err = template.New(fmt.Sprintf("%s.page.tmpl", page)).Funcs(functions).ParseFS(templateFS, "templates/base.layout.tmpl", strings.Join(partials, ","), templateToRender)
-
 	} else {
 		t, err = template.New(fmt.Sprintf("%s.page.tmpl", page)).Funcs(functions).ParseFS(templateFS, "templates/base.layout.tmpl", templateToRender)
-
 	}
-
 	if err != nil {
 		app.errorLog.Println(err)
 		return nil, err
